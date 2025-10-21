@@ -432,7 +432,6 @@
 <body>
     <div class="action-buttons no-print">
         <button class="btn btn-success" onclick="guardarPDF()">💾 Guardar PDF</button>
-        <button class="btn" onclick="limpiarFormulario()">🔄 Limpiar</button>
     </div>
     
     <div class="container" id="pdf-content">
@@ -646,26 +645,40 @@
                 const { jsPDF } = window.jspdf;
                 const element = document.getElementById('pdf-content');
 
-                // Capturar el contenido como imagen con alta calidad y colores
+                // Forzar renderizado de estilos antes de capturar
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Capturar el contenido como imagen con configuración mejorada
                 const canvas = await html2canvas(element, {
-                    scale: 3, // Mayor escala para mejor calidad
+                    scale: 4, // Máxima escala para mejor calidad
                     useCORS: true,
                     logging: false,
                     backgroundColor: '#ffffff',
-                    allowTaint: true,
-                    removeContainer: false,
+                    allowTaint: false,
+                    foreignObjectRendering: false,
                     imageTimeout: 0,
-                    letterRendering: true
+                    letterRendering: true,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        // Asegurar que los estilos se apliquen en el clon
+                        const clonedElement = clonedDoc.getElementById('pdf-content');
+                        if (clonedElement) {
+                            clonedElement.style.display = 'block';
+                            clonedElement.style.position = 'relative';
+                        }
+                    }
                 });
 
-                const imgData = canvas.toDataURL('image/jpeg', 1.0); // JPEG con calidad máxima
+                // Usar PNG para mejor preservación de colores
+                const imgData = canvas.toDataURL('image/png', 1.0);
                 
                 // Crear PDF tamaño carta (letter)
                 const pdf = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
                     format: 'letter',
-                    compress: true
+                    compress: false // Desactivar compresión para mejor calidad
                 });
 
                 // Dimensiones de la página carta en mm
@@ -681,9 +694,9 @@
                     const ratio = (pageHeight - 15) / imgHeight;
                     const adjustedWidth = imgWidth * ratio;
                     const adjustedHeight = imgHeight * ratio;
-                    pdf.addImage(imgData, 'JPEG', 7.5, 7.5, adjustedWidth, adjustedHeight, undefined, 'FAST');
+                    pdf.addImage(imgData, 'PNG', 7.5, 7.5, adjustedWidth, adjustedHeight);
                 } else {
-                    pdf.addImage(imgData, 'JPEG', 7.5, 7.5, imgWidth, imgHeight, undefined, 'FAST');
+                    pdf.addImage(imgData, 'PNG', 7.5, 7.5, imgWidth, imgHeight);
                 }
 
                 // Guardar el PDF con el nombre personalizado
