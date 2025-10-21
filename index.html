@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario - Diseña tu Próximo Nivel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @page {
+            size: letter;
+            margin: 0.6in;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            input, textarea {
+                border: none !important;
+                background: transparent !important;
+                color: #333 !important;
+            }
+            .container {
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: white;
+            padding: 0.4in;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 2px;
+            font-weight: 800;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 0.75em;
+            font-style: italic;
+        }
+
+        .personal-info {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-field label {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .info-field input {
+            flex: 1;
+            border: none;
+            border-bottom: 2px solid #667eea;
+            padding: 4px 0;
+            font-size: 0.95em;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .info-field input:focus {
+            outline: none;
+            border-bottom-color: #764ba2;
+        }
+
+        .question-block {
+            margin-bottom: 12px;
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .question-text {
+            color: #333;
+            font-size: 0.88em;
+            font-weight: 600;
+        }
+
+        .answer-area {
+            background: #f8f9fa;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            width: 100%;
+            min-height: 40px;
+            font-family: inherit;
+            font-size: 0.85em;
+            resize: vertical;
+        }
+
+        .answer-area:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .scale-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1.5px solid #ddd;
+            margin: 6px 0;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .scale-item {
+            text-align: center;
+            flex: 1 0 9%;
+            min-width: 35px;
+        }
+
+        .scale-number {
+            width: 28px;
+            height: 28px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85em;
+            color: #667eea;
+            margin: 0 auto 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .scale-number:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .scale-number.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #764ba2;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .scale-label {
+            color: #666;
+            font-size: 0.65em;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .action-box {
+            background: #f8f9fa;
+            border: 1.5px solid #ddd;
+            border-radius: 6px;
+            padding: 6px;
+            min-height: 45px;
+            position: relative;
+        }
+
+        .action-box:before {
+            content: attr(data-number);
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: #667eea;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .action-box textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 45px;
+            border: none;
+            background: transparent;
+            padding-left: 22px;
+            padding-top: 3px;
+            font-family: inherit;
+            font-size: 0.8em;
+            resize: vertical;
+        }
+
+        .action-box textarea:focus {
+            outline: none;
+        }
+
+        .date-start {
+            background: #fff3cd;
+            border: 1.5px solid #ffc107;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .date-start strong {
+            color: #856404;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.88em;
+        }
+
+        .date-start input {
+            border: none;
+            border-bottom: 2px solid #856404;
+            padding: 4px;
+            width: 250px;
+            max-width: 100%;
+            text-align: center;
+            font-size: 0.88em;
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .date-start input:focus {
+            outline: none;
+            border-bottom-color: #856404;
+        }
+
+        .footer-quote {
+            margin-top: 12px;
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .footer-quote p {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.88em;
+            font-style: italic;
+        }
+
+        .action-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 30px rgba(40, 167, 69, 0.6);
+        }
+
+        .instructions-banner {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .instructions-banner h3 {
+            font-size: 0.95em;
+            margin-bottom: 6px;
+        }
+
+        .instructions-banner p {
+            font-size: 0.8em;
+            opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .personal-info {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: column;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.9em;
+            }
+
+            .scale-container {
+                max-width: 300px;
+                margin: 0 auto;
+                gap: 5px;
+            }
+
+            .scale-item {
+                flex: 1 0 18%;
+            }
+
+            .scale-number {
+                width: 30px;
+                height: 30px;
+                font-size: 0.85em;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .instructions-banner {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="action-buttons no-print">
+        <button class="btn btn-success" onclick="guardarPDF()">💾 Guardar PDF</button>
+        <button class="btn" onclick="limpiarFormulario()">🔄 Limpiar</button>
+    </div>
+    
+    <div class="container" id="pdf-content">
+        <div class="instructions-banner no-print">
+            <h3>📱 Instrucciones</h3>
+            <p>Completa todas las preguntas y haz clic en "Guardar PDF" para descargar tu plan de crecimiento personal</p>
+        </div>
+
+        <div class="header">
+            <h1>🎯 Diseña tu Próximo Nivel</h1>
+            <p class="subtitle">Plan de Crecimiento Personal - 3 Meses | Capítulo 7: La Ley del Diseño - John C. Maxwell</p>
+        </div>
+
+        <div class="personal-info">
+            <div class="info-field">
+                <label>Nombre:</label>
+                <input type="text" id="nombre" placeholder="Escribe tu nombre completo">
+            </div>
+            <div class="info-field">
+                <label>Fecha:</label>
+                <input type="text" id="fecha" placeholder="DD/MM/AAAA">
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-header">
+                <span class="question-number">1</span>
+                <span class="question-text">¿En qué área de mi vida necesito crecer más urgentemente?</span>
+            </div>
+            <textarea class="answer-area" id="pregunta1" placeholder="Escribe tu respuesta aquí..."></textarea>
+        </div>
+
+        <div class="question-block">
+            <div class="question-header">
+                <span class="question-number">2</span>
+                <span class="question-text">¿Dónde estoy HOY en esa área? (Califica del 1 al 10)</span>
+            </div>
+            <div class="scale-container" id="scale-hoy">
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 1)">1</div>
+                    <div class="scale-label">Muy Bajo</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 2)">2</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 3)">3</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 4)">4</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 5)">5</div>
+                    <div class="scale-label">Medio</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 6)">6</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 7)">7</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 8)">8</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 9)">9</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('hoy', 10)">10</div>
+                    <div class="scale-label">Excelente</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-header">
+                <span class="question-number">3</span>
+                <span class="question-text">¿Dónde quiero estar en 3 MESES? (Califica del 1 al 10)</span>
+            </div>
+            <div class="scale-container" id="scale-futuro">
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 1)">1</div>
+                    <div class="scale-label">Muy Bajo</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 2)">2</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 3)">3</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 4)">4</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 5)">5</div>
+                    <div class="scale-label">Medio</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 6)">6</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 7)">7</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 8)">8</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 9)">9</div>
+                    <div class="scale-label">.</div>
+                </div>
+                <div class="scale-item">
+                    <div class="scale-number" onclick="selectScale('futuro', 10)">10</div>
+                    <div class="scale-label">Excelente</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-header">
+                <span class="question-number">4</span>
+                <span class="question-text">¿Qué 3 ACCIONES específicas realizaré semanalmente?</span>
+            </div>
+            <div class="actions-grid">
+                <div class="action-box" data-number="1">
+                    <textarea id="accion1" placeholder="Acción 1..."></textarea>
+                </div>
+                <div class="action-box" data-number="2">
+                    <textarea id="accion2" placeholder="Acción 2..."></textarea>
+                </div>
+                <div class="action-box" data-number="3">
+                    <textarea id="accion3" placeholder="Acción 3..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <div class="question-header">
+                <span class="question-number">5</span>
+                <span class="question-text">¿Cuándo empiezo? (Escribe fecha y hora específica)</span>
+            </div>
+            <div class="date-start">
+                <strong>📅 Mi Fecha de Inicio:</strong>
+                <input type="text" id="fechaInicio" placeholder="Ejemplo: Lunes 21 de octubre, 7:00 AM">
+            </div>
+        </div>
+
+        <div class="footer-quote">
+            <p>"Un diseño sin fecha de inicio es solo un deseo. ¡El crecimiento empieza HOY!"</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-completar fecha actual
+        window.onload = function() {
+            const hoy = new Date();
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const año = hoy.getFullYear();
+            document.getElementById('fecha').value = `${dia}/${mes}/${año}`;
+        }
+
+        // Selección de escala
+        function selectScale(type, value) {
+            const container = document.getElementById(`scale-${type}`);
+            const numbers = container.querySelectorAll('.scale-number');
+            numbers.forEach(num => num.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        // Guardar como PDF directamente sin menú de impresión
+        async function guardarPDF() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const pregunta1 = document.getElementById('pregunta1').value.trim();
+
+            if (!nombre) {
+                alert('⚠️ Por favor, ingresa tu nombre antes de guardar el PDF');
+                document.getElementById('nombre').focus();
+                return;
+            }
+
+            if (!pregunta1) {
+                alert('⚠️ Por favor, completa al menos la primera pregunta');
+                document.getElementById('pregunta1').focus();
+                return;
+            }
+
+            // Mostrar mensaje de carga
+            const btnGuardar = document.querySelector('.btn-success');
+            const textoOriginal = btnGuardar.innerHTML;
+            btnGuardar.innerHTML = '⏳ Generando PDF...';
+            btnGuardar.disabled = true;
+
+            // Ocultar botones y banner
+            document.querySelector('.action-buttons').style.display = 'none';
+            document.querySelector('.instructions-banner').style.display = 'none';
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const element = document.getElementById('pdf-content');
+
+                // Capturar el contenido como imagen con alta calidad y colores
+                const canvas = await html2canvas(element, {
+                    scale: 3, // Mayor escala para mejor calidad
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    allowTaint: true,
+                    removeContainer: false,
+                    imageTimeout: 0,
+                    letterRendering: true
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 1.0); // JPEG con calidad máxima
+                
+                // Crear PDF tamaño carta (letter)
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'letter',
+                    compress: true
+                });
+
+                // Dimensiones de la página carta en mm
+                const pageWidth = 215.9;  // 8.5 pulgadas
+                const pageHeight = 279.4; // 11 pulgadas
+                
+                // Calcular dimensiones de la imagen para ajustar a la página
+                const imgWidth = pageWidth - 15; // Margen
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                // Si la imagen es más alta que la página, ajustar
+                if (imgHeight > pageHeight - 15) {
+                    const ratio = (pageHeight - 15) / imgHeight;
+                    const adjustedWidth = imgWidth * ratio;
+                    const adjustedHeight = imgHeight * ratio;
+                    pdf.addImage(imgData, 'JPEG', 7.5, 7.5, adjustedWidth, adjustedHeight, undefined, 'FAST');
+                } else {
+                    pdf.addImage(imgData, 'JPEG', 7.5, 7.5, imgWidth, imgHeight, undefined, 'FAST');
+                }
+
+                // Guardar el PDF con el nombre personalizado
+                const nombreArchivo = `Plan de Crecimiento Personal - ${nombre}.pdf`;
+                pdf.save(nombreArchivo);
+
+                // Abrir el PDF en una nueva pestaña
+                const pdfBlob = pdf.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                window.open(pdfUrl, '_blank');
+
+                // Mostrar mensaje de éxito
+                setTimeout(() => {
+                    alert('✅ PDF guardado y abierto exitosamente');
+                }, 500);
+
+            } catch (error) {
+                console.error('Error al generar PDF:', error);
+                alert('❌ Hubo un error al generar el PDF. Por favor intenta nuevamente.');
+            } finally {
+                // Restaurar botones y banner
+                document.querySelector('.action-buttons').style.display = 'flex';
+                document.querySelector('.instructions-banner').style.display = 'block';
+                btnGuardar.innerHTML = textoOriginal;
+                btnGuardar.disabled = false;
+            }
+        }
+
+        // Limpiar formulario
+        function limpiarFormulario() {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los campos?')) {
+                document.getElementById('nombre').value = '';
+                document.getElementById('pregunta1').value = '';
+                document.getElementById('accion1').value = '';
+                document.getElementById('accion2').value = '';
+                document.getElementById('accion3').value = '';
+                document.getElementById('fechaInicio').value = '';
+                
+                // Limpiar selecciones de escala
+                document.querySelectorAll('.scale-number').forEach(num => {
+                    num.classList.remove('selected');
+                });
+                
+                // Restaurar fecha actual
+                const hoy = new Date();
+                const dia = String(hoy.getDate()).padStart(2, '0');
+                const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+                const año = hoy.getFullYear();
+                document.getElementById('fecha').value = `${dia}/${mes}/${año}`;
+                
+                alert('✅ Formulario limpiado correctamente');
+            }
+        }
+    </script>
+</body>
+</html>
